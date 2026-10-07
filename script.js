@@ -128,7 +128,7 @@ function render() {
     </article>`).join("");
 
   $("#cards").innerHTML = PROJECTS.map(p => `
-    <article class="card" style="--c1:${p.c[0]};--c2:${p.c[1]}">
+    <article class="card">
       <div class="kind">${p.kind[lang]}</div>
       <h3>${p.title[lang]}</h3>
       <p>${p.desc[lang]}</p>

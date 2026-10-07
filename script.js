@@ -45,13 +45,13 @@ const T = {
 
 Object.assign(T.es, {
   "gh.title": "Geocodificación, paso a paso",
-  "gh.p": "Mi tesis traduce direcciones escritas con ruido a geohashes de 9 caracteres. Cada carácter divide la celda anterior en una cuadrícula y elige una: así se llega de todo el planeta a un cuadro de unos 5 m. Elige una ciudad y míralo.",
+  "gh.p": "Mi tesis traduce direcciones escritas con ruido a geohashes de 9 caracteres (unos 5 m). Cada carácter divide la celda anterior en una cuadrícula y elige una; esta demo se detiene en 6 (cerca de 1 km, un barrio) para que se vea el recorrido. Elige una ciudad.",
   "gh.prec": "Precisión", "gh.cell": "Tamaño de celda", "gh.coords": "Coordenadas", "gh.replay": "Repetir ↻",
   "gh.credit": "México: mapa base multiescala, simplificado y reproyectado a WGS84. Resto del mundo: Natural Earth (dominio público). Las ciudades son aproximadas."
 });
 Object.assign(T.en, {
   "gh.title": "Geocoding, step by step",
-  "gh.p": "My thesis maps noisy written addresses to 9-character geohashes. Each character splits the previous cell into a grid and picks one, going from the whole planet down to a square of about 5 m. Pick a city and watch it.",
+  "gh.p": "My thesis maps noisy written addresses to 9-character geohashes (about 5 m). Each character splits the previous cell into a grid and picks one; this demo stops at 6 (about 1 km, a neighborhood) so the path stays visible. Pick a city.",
   "gh.prec": "Precision", "gh.cell": "Cell size", "gh.coords": "Coordinates", "gh.replay": "Replay ↻",
   "gh.credit": "Mexico: multiscale base map, simplified and reprojected to WGS84. Rest of the world: Natural Earth (public domain). Cities are approximate."
 });
@@ -227,6 +227,7 @@ onScroll();
   ];
   const CELL = ["5,000 × 5,000 km", "1,250 × 625 km", "156 × 156 km", "39 × 19.5 km", "4.9 × 4.9 km", "1.2 × 0.61 km", "153 × 153 m", "38 × 19 m", "4.8 × 4.8 m"];
   const HOLD = 650, ZOOM = 750, LEVEL = HOLD + ZOOM;
+  const DEPTH = 6; // la tesis usa 9; la demo se detiene en 6 (~1 km)
 
   function charAt(col, row, nl, na, lonFirst) {
     const lb = col.toString(2).padStart(nl, "0").split("").map(Number);
@@ -237,7 +238,7 @@ onScroll();
   }
   function encode(lat, lon) {
     const b = [-90, 90, -180, 180]; let lonTurn = true; const steps = [];
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < DEPTH; i++) {
       const lonFirst = lonTurn, parent = b.slice(), lonBits = [], latBits = [];
       for (let k = 0; k < 5; k++) {
         if (lonTurn) { const m = (b[2] + b[3]) / 2, bit = lon >= m ? 1 : 0; lonBits.push(bit); if (bit) b[2] = m; else b[3] = m; }
@@ -259,7 +260,7 @@ onScroll();
 
   document.getElementById("ghPlaces").innerHTML = PLACES.map((p, i) =>
     `<button class="chip-btn${i ? "" : " on"}" data-i="${i}">${p[0]}</button>`).join("");
-  codeEl.innerHTML = Array.from({ length: 9 }, () => "<span></span>").join("");
+  codeEl.innerHTML = Array.from({ length: DEPTH }, () => "<span></span>").join("");
   const spans = [...codeEl.children];
 
   function size() {
@@ -354,27 +355,27 @@ onScroll();
   function setShown(n) {
     if (n === shown) return; shown = n;
     spans.forEach((s, i) => { s.textContent = i < n ? data.hash[i] : "·"; s.classList.toggle("on", i < n); });
-    precEl.textContent = n + " / 9"; cellEl.textContent = n ? CELL[n - 1] : "—";
+    precEl.textContent = n + " / " + DEPTH; cellEl.textContent = n ? CELL[n - 1] : "—";
     cv.setAttribute("aria-label", "Geohash " + place[0] + ": " + data.hash.slice(0, n));
   }
   function frame(now) {
     const c = { a1: css("--a1"), a2: css("--a2"), border: css("--border"), muted: css("--muted"), text: css("--text") };
     ctx.clearRect(0, 0, W, H);
-    const el = reduceMo ? 9 * LEVEL : now - t0, lvl = Math.floor(el / LEVEL), ph = el - lvl * LEVEL;
-    const P = (i) => i >= 9 ? data.fin : data.steps[i].b;
+    const el = reduceMo ? DEPTH * LEVEL : now - t0, lvl = Math.floor(el / LEVEL), ph = el - lvl * LEVEL;
+    const P = (i) => i >= DEPTH ? data.fin : data.steps[i].b;
     let n;
-    if (lvl >= 9) {
-      const m = mapper(data.fin); n = 9; drawMap(m, c); fillCell(m, data.fin, c, 1); pin(m, c, el);
+    if (lvl >= DEPTH) {
+      const m = mapper(data.fin); n = DEPTH; drawMap(m, c); fillCell(m, data.fin, c, 1); pin(m, c, el);
     } else {
       const u = ph < HOLD ? 0 : ease((ph - HOLD) / ZOOM);
       const m = mapper(viewAt(P(lvl), P(lvl + 1), u));
       drawMap(m, c);
       drawGrid(data.steps[lvl], m, 1 - u, Math.min(1, ph / 250), c);
-      if (lvl < 8) drawGrid(data.steps[lvl + 1], m, u, 0, c); else if (u > 0) fillCell(m, data.fin, c, u);
+      if (lvl < DEPTH - 1) drawGrid(data.steps[lvl + 1], m, u, 0, c); else if (u > 0) fillCell(m, data.fin, c, u);
       pin(m, c, el); n = lvl + (ph > 250 ? 1 : 0);
     }
     setShown(n);
-    raf = visible && !(lvl >= 9 && reduceMo) ? requestAnimationFrame(frame) : 0;
+    raf = visible && !(lvl >= DEPTH && reduceMo) ? requestAnimationFrame(frame) : 0;
   }
   function start(i) {
     place = PLACES[i]; data = encode(place[1], place[2]); shown = -1; t0 = performance.now();

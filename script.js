@@ -45,15 +45,15 @@ const T = {
 
 Object.assign(T.es, {
   "gh.title": "Geocodificación, paso a paso",
-  "gh.p": "Mi tesis traduce direcciones escritas con ruido a geohashes de 9 caracteres. Cada carácter divide la celda anterior en una cuadrícula y elige una: así se llega de todo el planeta a un cuadro de unos 5 m.",
+  "gh.p": "Mi tesis traduce direcciones escritas con ruido a geohashes de 9 caracteres. Cada carácter divide la celda anterior en una cuadrícula y elige una: así se llega de todo el planeta a un cuadro de unos 5 m. Elige una ciudad y míralo.",
   "gh.prec": "Precisión", "gh.cell": "Tamaño de celda", "gh.coords": "Coordenadas", "gh.replay": "Repetir ↻",
-  "gh.credit": "Mapa base multiescala de México, simplificado y reproyectado a WGS84 para la web. Los lugares son aproximados."
+  "gh.credit": "México: mapa base multiescala, simplificado y reproyectado a WGS84. Resto del mundo: Natural Earth (dominio público). Las ciudades son aproximadas."
 });
 Object.assign(T.en, {
   "gh.title": "Geocoding, step by step",
-  "gh.p": "My thesis maps noisy written addresses to 9-character geohashes. Each character splits the previous cell into a grid and picks one, going from the whole planet down to a square of about 5 m.",
+  "gh.p": "My thesis maps noisy written addresses to 9-character geohashes. Each character splits the previous cell into a grid and picks one, going from the whole planet down to a square of about 5 m. Pick a city and watch it.",
   "gh.prec": "Precision", "gh.cell": "Cell size", "gh.coords": "Coordinates", "gh.replay": "Replay ↻",
-  "gh.credit": "Multiscale base map of Mexico, simplified and reprojected to WGS84 for the web. Locations are approximate."
+  "gh.credit": "Mexico: multiscale base map, simplified and reprojected to WGS84. Rest of the world: Natural Earth (public domain). Cities are approximate."
 });
 
 const JOBS = [
@@ -221,8 +221,9 @@ onScroll();
 (() => {
   const B32 = "0123456789bcdefghjkmnpqrstuvwxyz";
   const PLACES = [
-    ["Mérida", 20.9675, -89.6237], ["Cancún", 21.1619, -86.8515], ["CDMX", 19.4326, -99.1332],
-    ["Guadalajara", 20.6597, -103.3496], ["Monterrey", 25.6866, -100.3161]
+    ["Mérida", 20.9675, -89.6237], ["CDMX", 19.4326, -99.1332], ["New York", 40.7128, -74.0060],
+    ["São Paulo", -23.5505, -46.6333], ["Reykjavík", 64.1466, -21.9426], ["London", 51.5074, -0.1278],
+    ["Lagos", 6.5244, 3.3792], ["Nairobi", -1.2921, 36.8219], ["Tokyo", 35.6762, 139.6503], ["Sydney", -33.8688, 151.2093]
   ];
   const CELL = ["5,000 × 5,000 km", "1,250 × 625 km", "156 × 156 km", "39 × 19.5 km", "4.9 × 4.9 km", "1.2 × 0.61 km", "153 × 153 m", "38 × 19 m", "4.8 × 4.8 m"];
   const HOLD = 650, ZOOM = 750, LEVEL = HOLD + ZOOM;
@@ -303,13 +304,16 @@ onScroll();
     if (!MAP) return;
     const vb = [m.cx - W / 2 / m.s, m.cy - H / 2 / m.s, m.cx + W / 2 / m.s, m.cy + H / 2 / m.s];
     ctx.save(); ctx.lineJoin = "round";
-    trace(MAP.paises, m, vb); ctx.globalAlpha = .08; ctx.fillStyle = c.muted; ctx.fill("evenodd");
-    ctx.globalAlpha = .35 * (1 - Math.max(0, Math.min(1, (m.s - 180) / 380))); ctx.strokeStyle = c.muted; ctx.lineWidth = .8; ctx.stroke();
-    trace(MAP.estados, m, vb); ctx.globalAlpha = .13; ctx.fillStyle = c.a1; ctx.fill("evenodd");
     const ramp = (v, a, b) => Math.max(0, Math.min(1, (v - a) / (b - a)));
+    const fill = 1 - ramp(m.s, 400, 1500), edge = 1 - ramp(m.s, 180, 560);
+    for (const layer of [MAP.mundo, MAP.paises]) {
+      if (fill > .01) { trace(layer, m, vb); ctx.globalAlpha = .09 * fill; ctx.fillStyle = c.muted; ctx.fill("evenodd"); }
+      if (edge > .01) { trace(layer, m, vb); ctx.globalAlpha = .35 * edge; ctx.strokeStyle = c.muted; ctx.lineWidth = .7; ctx.stroke(); }
+    }
+    if (fill > .01) { trace(MAP.estados, m, vb); ctx.globalAlpha = .13 * fill; ctx.fillStyle = c.a1; ctx.fill("evenodd"); }
     const aMun = .45 * ramp(m.s, 22, 60) * (1 - ramp(m.s, 80, 220));
     if (aMun > .01) { trace(MAP.municipios, m, vb); ctx.globalAlpha = aMun; ctx.strokeStyle = c.muted; ctx.lineWidth = .6; ctx.stroke(); }
-    const aEst = .6 * (1 - ramp(m.s, 180, 560));
+    const aEst = .6 * edge;
     if (aEst > .01) { trace(MAP.estados, m, vb); ctx.globalAlpha = aEst; ctx.strokeStyle = c.a1; ctx.lineWidth = 1; ctx.stroke(); }
     ctx.restore();
   }
@@ -389,10 +393,10 @@ onScroll();
   function loadMap() {
     if (mapRequested) return; mapRequested = true;
     const tag = document.createElement("script");
-    tag.src = "data/mexico.js?v=3";
+    tag.src = "data/basemap.js?v=4";
     tag.onload = () => {
-      const d = window.MEXICO_MAP; if (!d) return;
-      MAP = { paises: prep(d.paises), estados: prep(d.estados), municipios: prep(d.municipios) };
+      const d = window.BASEMAP; if (!d) return;
+      MAP = { mundo: prep(d.mundo), paises: prep(d.paises), estados: prep(d.estados), municipios: prep(d.municipios) };
       if (!raf) raf = requestAnimationFrame(frame);
     };
     document.head.appendChild(tag);

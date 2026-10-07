@@ -93,3 +93,32 @@ footer{text-align:center;color:var(--muted);font-size:.82rem;padding:32px 24px 4
   section,.hero{padding:64px 16px}.hero{padding-top:72px}
   .hero::after{display:none}
 }
+
+/* ---- Movimiento ---- */
+.progress{position:fixed;top:0;left:0;height:3px;width:100%;z-index:30;transform-origin:0 50%;transform:scaleX(0);
+  background:linear-gradient(90deg,var(--a1),var(--a2))}
+.hero > *:not(.layer){position:relative}
+.layer{position:absolute;border-radius:50%;pointer-events:none;z-index:-1;will-change:transform}
+.l1{width:320px;height:320px;right:6%;top:40px;border:1px solid var(--grid);box-shadow:0 0 0 40px color-mix(in srgb,var(--a2) 5%,transparent)}
+.l2{width:90px;height:90px;right:30%;top:300px;border:2px dashed color-mix(in srgb,var(--a1) 35%,transparent)}
+.l3{width:18px;height:18px;right:18%;top:420px;background:var(--a1);opacity:.5}
+.hero::before{transform:translate3d(0,calc(var(--py,0) * 0.25px),0)}
+.hero::after{transform:translate3d(0,calc(var(--py,0) * -0.15px),0)}
+
+.js .reveal{opacity:0;transform:translateY(28px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+.js .reveal.in{opacity:1;transform:none}
+.js h2.reveal::after{transform:scaleX(0);transform-origin:0 50%;transition:transform .8s .25s cubic-bezier(.2,.7,.2,1)}
+.js h2.reveal.in::after{transform:scaleX(1)}
+.js .job.reveal{transform:translateX(-24px)}
+.js .job.reveal.in{transform:none}
+.hero .eyebrow,.hero h1,.hero .lead,.hero .cta,.hero .stats{animation:rise .9s cubic-bezier(.2,.7,.2,1) both}
+.hero h1{animation-delay:.1s}.hero .lead{animation-delay:.25s}.hero .cta{animation-delay:.4s}.hero .stats{animation-delay:.55s}
+@keyframes rise{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+.card:hover::before{width:7px}.card::before{transition:width .25s}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .js .reveal{opacity:1;transform:none}
+  .layer{display:none}
+}
+@media(max-width:760px){.layer{display:none}}

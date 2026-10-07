@@ -152,3 +152,53 @@ $("#theme").onclick = () => {
 try { const th = localStorage.getItem("theme"); if (th) document.documentElement.dataset.theme = th; } catch {}
 $("#year").textContent = new Date().getFullYear();
 render();
+
+
+/* ---- Movimiento: parallax, reveal, contadores, progreso ---- */
+document.documentElement.classList.add("js");
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const io = "IntersectionObserver" in window ? new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
+}, { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }) : null;
+
+function observeReveals() {
+  document.querySelectorAll("section h2, .about-grid p, .job, .card, .chips li, .contact p, .contact .cta")
+    .forEach((el, i) => {
+      if (el.classList.contains("reveal")) return;
+      el.classList.add("reveal");
+      const idx = [...el.parentElement.children].indexOf(el);
+      el.style.transitionDelay = Math.min(idx, 6) * 70 + "ms";
+      io ? io.observe(el) : el.classList.add("in");
+    });
+}
+const _render = render;
+render = function () { _render(); observeReveals(); };
+render();
+
+document.querySelectorAll(".stats b").forEach(b => {
+  const m = b.textContent.match(/^(\d+(?:\.\d+)?)$/);
+  if (!m || reduce) return;
+  const end = parseFloat(m[1]), dec = (m[1].split(".")[1] || "").length, t0 = performance.now();
+  b.textContent = (0).toFixed(dec);
+  const tick = (t) => {
+    const p = Math.min((t - t0 - 500) / 1100, 1);
+    b.textContent = (end * (1 - Math.pow(1 - Math.max(p, 0), 3))).toFixed(dec);
+    if (p < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+});
+
+const hero = document.getElementById("hero"), bar = document.getElementById("progress");
+const layers = [...document.querySelectorAll(".layer")];
+let ticking = false;
+function onScroll() {
+  const y = window.scrollY, max = document.documentElement.scrollHeight - innerHeight;
+  bar.style.transform = `scaleX(${max > 0 ? y / max : 0})`;
+  if (!reduce && y < innerHeight * 1.5) {
+    hero.style.setProperty("--py", y);
+    layers.forEach(l => l.style.transform = `translate3d(0,${y * l.dataset.speed}px,0)`);
+  }
+  ticking = false;
+}
+addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
+onScroll();

@@ -140,3 +140,4 @@ footer{text-align:center;color:var(--muted);font-size:.82rem;padding:32px 24px 4
 .chip-btn.on{background:var(--a1);color:var(--on-a1);border-color:var(--a1)}
 .gh-side .btn{align-self:flex-start;cursor:pointer;font-family:inherit;color:var(--text)}
 @media(max-width:860px){.gh-wrap{grid-template-columns:1fr}#ghCanvas{height:320px}}
+.gh-credit{margin-top:14px;font-size:.78rem;color:var(--muted)}

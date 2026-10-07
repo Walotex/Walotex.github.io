@@ -46,12 +46,14 @@ const T = {
 Object.assign(T.es, {
   "gh.title": "Geocodificación, paso a paso",
   "gh.p": "Mi tesis traduce direcciones escritas con ruido a geohashes de 9 caracteres. Cada carácter divide la celda anterior en una cuadrícula y elige una: así se llega de todo el planeta a un cuadro de unos 5 m.",
-  "gh.prec": "Precisión", "gh.cell": "Tamaño de celda", "gh.coords": "Coordenadas", "gh.replay": "Repetir ↻"
+  "gh.prec": "Precisión", "gh.cell": "Tamaño de celda", "gh.coords": "Coordenadas", "gh.replay": "Repetir ↻",
+  "gh.credit": "Mapa base multiescala de México, simplificado y reproyectado a WGS84 para la web. Los lugares son aproximados."
 });
 Object.assign(T.en, {
   "gh.title": "Geocoding, step by step",
   "gh.p": "My thesis maps noisy written addresses to 9-character geohashes. Each character splits the previous cell into a grid and picks one, going from the whole planet down to a square of about 5 m.",
-  "gh.prec": "Precision", "gh.cell": "Cell size", "gh.coords": "Coordinates", "gh.replay": "Replay ↻"
+  "gh.prec": "Precision", "gh.cell": "Cell size", "gh.coords": "Coordinates", "gh.replay": "Replay ↻",
+  "gh.credit": "Multiscale base map of Mexico, simplified and reprojected to WGS84 for the web. Locations are approximate."
 });
 
 const JOBS = [

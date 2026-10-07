@@ -48,6 +48,24 @@
       </ul>
     </section>
 
+    <section id="geohash">
+      <h2 data-i18n="gh.title"></h2>
+      <p class="gh-lead" data-i18n="gh.p"></p>
+      <div class="gh-wrap">
+        <canvas id="ghCanvas" role="img" aria-label="Geohash"></canvas>
+        <div class="gh-side">
+          <div class="gh-code mono" id="ghCode" aria-live="off"></div>
+          <dl class="gh-meta">
+            <div><dt data-i18n="gh.prec"></dt><dd id="ghPrec">0 / 9</dd></div>
+            <div><dt data-i18n="gh.cell"></dt><dd id="ghCell">—</dd></div>
+            <div><dt data-i18n="gh.coords"></dt><dd id="ghCoords" class="mono">—</dd></div>
+          </dl>
+          <div class="gh-places" id="ghPlaces"></div>
+          <button class="btn" id="ghReplay" data-i18n="gh.replay"></button>
+        </div>
+      </div>
+    </section>
+
     <section id="about">
       <h2 data-i18n="about.title"></h2>
       <div class="about-grid">

@@ -43,6 +43,17 @@ const T = {
   }
 };
 
+Object.assign(T.es, {
+  "gh.title": "Geocodificación, paso a paso",
+  "gh.p": "Mi tesis traduce direcciones escritas con ruido a geohashes de 9 caracteres. Cada carácter divide la celda anterior en una cuadrícula y elige una: así se llega de todo el planeta a un cuadro de unos 5 m.",
+  "gh.prec": "Precisión", "gh.cell": "Tamaño de celda", "gh.coords": "Coordenadas", "gh.replay": "Repetir ↻"
+});
+Object.assign(T.en, {
+  "gh.title": "Geocoding, step by step",
+  "gh.p": "My thesis maps noisy written addresses to 9-character geohashes. Each character splits the previous cell into a grid and picks one, going from the whole planet down to a square of about 5 m.",
+  "gh.prec": "Precision", "gh.cell": "Cell size", "gh.coords": "Coordinates", "gh.replay": "Replay ↻"
+});
+
 const JOBS = [
   { org:"Softcrédito", date:{es:"May 2025 – Sep 2025",en:"May 2025 – Sep 2025"},
     role:{es:"Científico de datos / Analista de datos",en:"Data Scientist / Data Analyst"},
@@ -202,3 +213,144 @@ function onScroll() {
 }
 addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }, { passive: true });
 onScroll();
+
+
+/* ---- Demo de geohash ---- */
+(() => {
+  const B32 = "0123456789bcdefghjkmnpqrstuvwxyz";
+  const PLACES = [
+    ["Mérida", 20.9675, -89.6237], ["Cancún", 21.1619, -86.8515], ["CDMX", 19.4326, -99.1332],
+    ["Guadalajara", 20.6597, -103.3496], ["Monterrey", 25.6866, -100.3161]
+  ];
+  const CELL = ["5,000 × 5,000 km", "1,250 × 625 km", "156 × 156 km", "39 × 19.5 km", "4.9 × 4.9 km", "1.2 × 0.61 km", "153 × 153 m", "38 × 19 m", "4.8 × 4.8 m"];
+  const HOLD = 650, ZOOM = 750, LEVEL = HOLD + ZOOM;
+
+  function charAt(col, row, nl, na, lonFirst) {
+    const lb = col.toString(2).padStart(nl, "0").split("").map(Number);
+    const ab = row.toString(2).padStart(na, "0").split("").map(Number);
+    const bits = []; let li = 0, ai = 0, lt = lonFirst;
+    for (let k = 0; k < 5; k++) { bits.push(lt ? lb[li++] : ab[ai++]); lt = !lt; }
+    return B32[parseInt(bits.join(""), 2)];
+  }
+  function encode(lat, lon) {
+    const b = [-90, 90, -180, 180]; let lonTurn = true; const steps = [];
+    for (let i = 0; i < 9; i++) {
+      const lonFirst = lonTurn, parent = b.slice(), lonBits = [], latBits = [];
+      for (let k = 0; k < 5; k++) {
+        if (lonTurn) { const m = (b[2] + b[3]) / 2, bit = lon >= m ? 1 : 0; lonBits.push(bit); if (bit) b[2] = m; else b[3] = m; }
+        else { const m = (b[0] + b[1]) / 2, bit = lat >= m ? 1 : 0; latBits.push(bit); if (bit) b[0] = m; else b[1] = m; }
+        lonTurn = !lonTurn;
+      }
+      const nl = lonBits.length, na = latBits.length;
+      const col = parseInt(lonBits.join(""), 2), row = parseInt(latBits.join(""), 2);
+      steps.push({ b: parent, cols: 1 << nl, rows: 1 << na, nl, na, col, row, lonFirst, ch: charAt(col, row, nl, na, lonFirst) });
+    }
+    return { steps, fin: b, hash: steps.map(s => s.ch).join("") };
+  }
+
+  const cv = document.getElementById("ghCanvas"), ctx = cv.getContext("2d");
+  const codeEl = document.getElementById("ghCode"), precEl = document.getElementById("ghPrec"),
+        cellEl = document.getElementById("ghCell"), coordsEl = document.getElementById("ghCoords");
+  const reduceMo = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let place = PLACES[0], data = encode(place[1], place[2]), t0 = 0, visible = false, raf = 0, shown = -1, W = 0, H = 0;
+
+  document.getElementById("ghPlaces").innerHTML = PLACES.map((p, i) =>
+    `<button class="chip-btn${i ? "" : " on"}" data-i="${i}">${p[0]}</button>`).join("");
+  codeEl.innerHTML = Array.from({ length: 9 }, () => "<span></span>").join("");
+  const spans = [...codeEl.children];
+
+  function size() {
+    const r = cv.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 2);
+    W = r.width; H = r.height; cv.width = W * d; cv.height = H * d; ctx.setTransform(d, 0, 0, d, 0, 0);
+  }
+  const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const ease = (u) => u < .5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2;
+
+  function viewAt(a, b, u) {
+    const la = a[1] - a[0], lb = b[1] - b[0], oa = a[3] - a[2], ob = b[3] - b[2];
+    const sLat = la * Math.pow(lb / la, u), sLon = oa * Math.pow(ob / oa, u);
+    const cLat = (a[0] + a[1]) / 2 + ((b[0] + b[1]) / 2 - (a[0] + a[1]) / 2) * u;
+    const cLon = (a[2] + a[3]) / 2 + ((b[2] + b[3]) / 2 - (a[2] + a[3]) / 2) * u;
+    return [cLat - sLat / 2, cLat + sLat / 2, cLon - sLon / 2, cLon + sLon / 2];
+  }
+  function mapper(v) {
+    const pad = 22, s = Math.min((W - pad * 2) / (v[3] - v[2]), (H - pad * 2) / (v[1] - v[0]));
+    const cx = (v[2] + v[3]) / 2, cy = (v[0] + v[1]) / 2;
+    return { x: (lon) => W / 2 + (lon - cx) * s, y: (lat) => H / 2 - (lat - cy) * s };
+  }
+  function fillCell(m, b, c, alpha) {
+    const x0 = m.x(b[2]), x1 = m.x(b[3]), y0 = m.y(b[1]), y1 = m.y(b[0]);
+    ctx.save(); ctx.fillStyle = c.a2; ctx.globalAlpha = .22 * alpha; ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+    ctx.globalAlpha = alpha; ctx.strokeStyle = c.a1; ctx.lineWidth = 2; ctx.strokeRect(x0, y0, x1 - x0, y1 - y0); ctx.restore();
+  }
+  function drawGrid(st, m, alpha, hl, c) {
+    if (alpha <= 0.01) return;
+    const xl = m.x(st.b[2]), xr = m.x(st.b[3]), yt = m.y(st.b[1]), yb = m.y(st.b[0]);
+    const w = (xr - xl) / st.cols, h = (yb - yt) / st.rows;
+    ctx.save(); ctx.globalAlpha = alpha;
+    if (hl > 0) { ctx.globalAlpha = alpha * hl * .28; ctx.fillStyle = c.a2; ctx.fillRect(xl + st.col * w, yb - (st.row + 1) * h, w, h); ctx.globalAlpha = alpha; }
+    ctx.strokeStyle = c.border; ctx.lineWidth = 1; ctx.beginPath();
+    for (let i = 0; i <= st.cols; i++) { ctx.moveTo(xl + i * w, yt); ctx.lineTo(xl + i * w, yb); }
+    for (let k = 0; k <= st.rows; k++) { ctx.moveTo(xl, yt + k * h); ctx.lineTo(xr, yt + k * h); }
+    ctx.stroke();
+    ctx.strokeStyle = c.a1; ctx.lineWidth = 2; ctx.strokeRect(xl, yt, xr - xl, yb - yt);
+    if (Math.min(w, h) > 20) {
+      ctx.font = `500 ${Math.max(11, Math.min(26, Math.min(w, h) * .38))}px "JetBrains Mono",monospace`;
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      for (let i = 0; i < st.cols; i++) for (let k = 0; k < st.rows; k++) {
+        const chosen = i === st.col && k === st.row;
+        ctx.fillStyle = chosen && hl > 0 ? c.a1 : c.muted; ctx.globalAlpha = alpha * (chosen ? 1 : .75);
+        ctx.fillText(charAt(i, k, st.nl, st.na, st.lonFirst), xl + (i + .5) * w, yb - (k + .5) * h);
+      }
+    }
+    ctx.restore();
+  }
+  function pin(m, c, el) {
+    const x = m.x(place[2]), y = m.y(place[1]), pulse = (el % 1600) / 1600;
+    ctx.save(); ctx.strokeStyle = c.a2; ctx.globalAlpha = 1 - pulse; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(x, y, 5 + pulse * 18, 0, 7); ctx.stroke(); ctx.restore();
+    ctx.fillStyle = c.a2; ctx.strokeStyle = c.text; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(x, y, 5, 0, 7); ctx.fill(); ctx.stroke();
+  }
+  function setShown(n) {
+    if (n === shown) return; shown = n;
+    spans.forEach((s, i) => { s.textContent = i < n ? data.hash[i] : "·"; s.classList.toggle("on", i < n); });
+    precEl.textContent = n + " / 9"; cellEl.textContent = n ? CELL[n - 1] : "—";
+    cv.setAttribute("aria-label", "Geohash " + place[0] + ": " + data.hash.slice(0, n));
+  }
+  function frame(now) {
+    const c = { a1: css("--a1"), a2: css("--a2"), border: css("--border"), muted: css("--muted"), text: css("--text") };
+    ctx.clearRect(0, 0, W, H);
+    const el = reduceMo ? 9 * LEVEL : now - t0, lvl = Math.floor(el / LEVEL), ph = el - lvl * LEVEL;
+    const P = (i) => i >= 9 ? data.fin : data.steps[i].b;
+    let n;
+    if (lvl >= 9) {
+      const m = mapper(data.fin); n = 9; fillCell(m, data.fin, c, 1); pin(m, c, el);
+    } else {
+      const u = ph < HOLD ? 0 : ease((ph - HOLD) / ZOOM);
+      const m = mapper(viewAt(P(lvl), P(lvl + 1), u));
+      drawGrid(data.steps[lvl], m, 1 - u, Math.min(1, ph / 250), c);
+      if (lvl < 8) drawGrid(data.steps[lvl + 1], m, u, 0, c); else if (u > 0) fillCell(m, data.fin, c, u);
+      pin(m, c, el); n = lvl + (ph > 250 ? 1 : 0);
+    }
+    setShown(n);
+    raf = visible && !(lvl >= 9 && reduceMo) ? requestAnimationFrame(frame) : 0;
+  }
+  function start(i) {
+    place = PLACES[i]; data = encode(place[1], place[2]); shown = -1; t0 = performance.now();
+    coordsEl.textContent = place[1].toFixed(4) + ", " + place[2].toFixed(4);
+    document.querySelectorAll("#ghPlaces .chip-btn").forEach((b, k) => b.classList.toggle("on", k === i));
+    cancelAnimationFrame(raf); raf = requestAnimationFrame(frame);
+  }
+  document.getElementById("ghPlaces").addEventListener("click", (e) => { const b = e.target.closest("[data-i]"); if (b) start(+b.dataset.i); });
+  document.getElementById("ghReplay").onclick = () => start(PLACES.indexOf(place));
+  addEventListener("resize", () => { size(); if (!raf) raf = requestAnimationFrame(frame); });
+  new MutationObserver(() => { if (!raf) raf = requestAnimationFrame(frame); })
+    .observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  size(); setShown(0); coordsEl.textContent = place[1].toFixed(4) + ", " + place[2].toFixed(4);
+  new IntersectionObserver((es) => {
+    const was = visible; visible = es[0].isIntersecting;
+    if (visible && !was) { t0 = performance.now(); shown = -1; if (!raf) raf = requestAnimationFrame(frame); }
+  }, { threshold: 0.3 }).observe(cv);
+})();

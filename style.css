@@ -122,3 +122,21 @@ footer{text-align:center;color:var(--muted);font-size:.82rem;padding:32px 24px 4
   .layer{display:none}
 }
 @media(max-width:760px){.layer{display:none}}
+
+/* ---- Demo geohash ---- */
+.gh-lead{color:var(--muted);max-width:680px;margin:-12px 0 32px}
+.gh-wrap{display:grid;grid-template-columns:1.25fr 1fr;gap:28px;align-items:stretch}
+#ghCanvas{width:100%;height:400px;background:var(--surface);border:1px solid var(--border);border-radius:18px;display:block}
+.gh-side{display:flex;flex-direction:column;gap:20px;justify-content:center}
+.gh-code{display:flex;flex-wrap:nowrap;gap:4px;font-size:clamp(.95rem,4.2vw,1.55rem);font-weight:500}
+.gh-code span{flex:1;max-width:1.5em;aspect-ratio:1/1.3;display:grid;place-items:center;border-radius:10px;border:1px dashed var(--border);color:var(--muted);transition:.25s}
+.gh-code span.on{border:1px solid var(--a1);background:color-mix(in srgb,var(--a1) 10%,transparent);color:var(--a1);transform:translateY(-3px)}
+.gh-meta{display:grid;gap:10px;padding:0}
+.gh-meta div{display:flex;justify-content:space-between;gap:16px;border-bottom:1px solid var(--border);padding-bottom:8px;font-size:.92rem}
+.gh-meta dt{color:var(--muted)}.gh-meta dd{margin:0;font-weight:600;text-align:right}
+.gh-places{display:flex;flex-wrap:wrap;gap:8px}
+.chip-btn{border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:99px;padding:6px 14px;font:600 .82rem Inter,sans-serif;cursor:pointer;transition:.2s}
+.chip-btn:hover{border-color:var(--a1)}
+.chip-btn.on{background:var(--a1);color:var(--on-a1);border-color:var(--a1)}
+.gh-side .btn{align-self:flex-start;cursor:pointer;font-family:inherit;color:var(--text)}
+@media(max-width:860px){.gh-wrap{grid-template-columns:1fr}#ghCanvas{height:320px}}

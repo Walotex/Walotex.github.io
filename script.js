@@ -388,10 +388,14 @@ onScroll();
   let mapRequested = false;
   function loadMap() {
     if (mapRequested) return; mapRequested = true;
-    fetch("data/mexico.json").then((r) => r.json()).then((d) => {
+    const tag = document.createElement("script");
+    tag.src = "data/mexico.js?v=3";
+    tag.onload = () => {
+      const d = window.MEXICO_MAP; if (!d) return;
       MAP = { paises: prep(d.paises), estados: prep(d.estados), municipios: prep(d.municipios) };
       if (!raf) raf = requestAnimationFrame(frame);
-    }).catch(() => {});
+    };
+    document.head.appendChild(tag);
   }
   new IntersectionObserver((es) => { if (es[0].isIntersecting) loadMap(); }, { rootMargin: "600px" }).observe(cv);
   new IntersectionObserver((es) => {

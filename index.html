@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Eduardo Mendoza Vargas · Data Scientist</title>
+  <meta name="description" content="Portafolio de Eduardo Mendoza Vargas: ciencia de datos, NLP para lenguas de bajos recursos y geointeligencia computacional.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="nav">
+    <a class="logo" href="#top">EM<span>.</span></a>
+    <nav>
+      <a href="#about" data-i18n="nav.about"></a>
+      <a href="#experience" data-i18n="nav.experience"></a>
+      <a href="#projects" data-i18n="nav.projects"></a>
+      <a href="#skills" data-i18n="nav.skills"></a>
+      <a href="#education" data-i18n="nav.education"></a>
+      <a href="#contact" data-i18n="nav.contact"></a>
+    </nav>
+    <div class="tools">
+      <button id="theme" aria-label="Tema">◐</button>
+      <button id="lang" aria-label="Idioma">EN</button>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="blob b1"></div><div class="blob b2"></div>
+      <p class="eyebrow mono" data-i18n="hero.eyebrow"></p>
+      <h1>Eduardo<br><span class="grad">Mendoza Vargas</span></h1>
+      <p class="lead" data-i18n="hero.lead"></p>
+      <div class="cta">
+        <a class="btn primary" href="#projects" data-i18n="hero.cta1"></a>
+        <a class="btn" href="#contact" data-i18n="hero.cta2"></a>
+      </div>
+      <ul class="stats">
+        <li><b>2</b><span data-i18n="stats.conf"></span></li>
+        <li><b>6</b><span data-i18n="stats.roles"></span></li>
+        <li><b>C1</b><span data-i18n="stats.english"></span></li>
+        <li><b>8.9</b><span data-i18n="stats.gpa"></span></li>
+      </ul>
+    </section>
+
+    <section id="about">
+      <h2 data-i18n="about.title"></h2>
+      <div class="about-grid">
+        <p data-i18n="about.p1"></p>
+        <p data-i18n="about.p2"></p>
+      </div>
+    </section>
+
+    <section id="experience">
+      <h2 data-i18n="exp.title"></h2>
+      <div class="timeline" id="timeline"></div>
+    </section>
+
+    <section id="projects">
+      <h2 data-i18n="proj.title"></h2>
+      <div class="cards" id="cards"></div>
+    </section>
+
+    <section id="skills">
+      <h2 data-i18n="skills.title"></h2>
+      <div class="skills" id="skillgrid"></div>
+    </section>
+
+    <section id="education">
+      <h2 data-i18n="edu.title"></h2>
+      <div class="edu-grid">
+        <article class="card">
+          <h3>Maestría en Geointeligencia Computacional</h3>
+          <p class="muted">CentroGeo · <span data-i18n="edu.present"></span></p>
+          <p data-i18n="edu.msc"></p>
+        </article>
+        <article class="card">
+          <h3 data-i18n="edu.bsc.t"></h3>
+          <p class="muted">Universidad Politécnica de Yucatán · <span data-i18n="edu.bsc.d"></span></p>
+          <p data-i18n="edu.bsc"></p>
+        </article>
+      </div>
+      <h3 class="sub" data-i18n="edu.certs"></h3>
+      <ul class="chips" id="certs"></ul>
+    </section>
+
+    <section id="contact" class="contact">
+      <h2 data-i18n="contact.title"></h2>
+      <p data-i18n="contact.p"></p>
+      <div class="cta center">
+        <a class="btn primary" href="mailto:walo2948@gmail.com">walo2948@gmail.com</a>
+        <a class="btn" href="https://www.linkedin.com/in/TU-USUARIO-LINKEDIN" target="_blank" rel="noopener">LinkedIn</a>
+        <a class="btn" href="https://github.com/TU-USUARIO-GITHUB" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>© <span id="year"></span> Eduardo Mendoza Vargas · Mérida, Yucatán, México</footer>
+  <script src="script.js"></script>
+</body>
+</html>

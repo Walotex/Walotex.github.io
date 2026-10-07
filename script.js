@@ -276,7 +276,40 @@ onScroll();
   function mapper(v) {
     const pad = 22, s = Math.min((W - pad * 2) / (v[3] - v[2]), (H - pad * 2) / (v[1] - v[0]));
     const cx = (v[2] + v[3]) / 2, cy = (v[0] + v[1]) / 2;
-    return { x: (lon) => W / 2 + (lon - cx) * s, y: (lat) => H / 2 - (lat - cy) * s };
+    return { s, cx, cy, x: (lon) => W / 2 + (lon - cx) * s, y: (lat) => H / 2 - (lat - cy) * s };
+  }
+  let MAP = null;
+  function prep(layer) {
+    return layer.map((rs) => {
+      let a = 1e9, b = 1e9, c = -1e9, d = -1e9; const e = rs[0];
+      for (let i = 0; i < e.length; i += 2) { a = Math.min(a, e[i]); c = Math.max(c, e[i]); b = Math.min(b, e[i + 1]); d = Math.max(d, e[i + 1]); }
+      return { rs, bb: [a, b, c, d] };
+    });
+  }
+  function trace(layer, m, vb) {
+    ctx.beginPath();
+    for (const p of layer) {
+      if (p.bb[2] < vb[0] || p.bb[0] > vb[2] || p.bb[3] < vb[1] || p.bb[1] > vb[3]) continue;
+      for (const r of p.rs) {
+        ctx.moveTo(m.x(r[0]), m.y(r[1]));
+        for (let i = 2; i < r.length; i += 2) ctx.lineTo(m.x(r[i]), m.y(r[i + 1]));
+        ctx.closePath();
+      }
+    }
+  }
+  function drawMap(m, c) {
+    if (!MAP) return;
+    const vb = [m.cx - W / 2 / m.s, m.cy - H / 2 / m.s, m.cx + W / 2 / m.s, m.cy + H / 2 / m.s];
+    ctx.save(); ctx.lineJoin = "round";
+    trace(MAP.paises, m, vb); ctx.globalAlpha = .08; ctx.fillStyle = c.muted; ctx.fill("evenodd");
+    ctx.globalAlpha = .35 * (1 - Math.max(0, Math.min(1, (m.s - 180) / 380))); ctx.strokeStyle = c.muted; ctx.lineWidth = .8; ctx.stroke();
+    trace(MAP.estados, m, vb); ctx.globalAlpha = .13; ctx.fillStyle = c.a1; ctx.fill("evenodd");
+    const ramp = (v, a, b) => Math.max(0, Math.min(1, (v - a) / (b - a)));
+    const aMun = .45 * ramp(m.s, 22, 60) * (1 - ramp(m.s, 80, 220));
+    if (aMun > .01) { trace(MAP.municipios, m, vb); ctx.globalAlpha = aMun; ctx.strokeStyle = c.muted; ctx.lineWidth = .6; ctx.stroke(); }
+    const aEst = .6 * (1 - ramp(m.s, 180, 560));
+    if (aEst > .01) { trace(MAP.estados, m, vb); ctx.globalAlpha = aEst; ctx.strokeStyle = c.a1; ctx.lineWidth = 1; ctx.stroke(); }
+    ctx.restore();
   }
   function fillCell(m, b, c, alpha) {
     const x0 = m.x(b[2]), x1 = m.x(b[3]), y0 = m.y(b[1]), y1 = m.y(b[0]);
@@ -325,10 +358,11 @@ onScroll();
     const P = (i) => i >= 9 ? data.fin : data.steps[i].b;
     let n;
     if (lvl >= 9) {
-      const m = mapper(data.fin); n = 9; fillCell(m, data.fin, c, 1); pin(m, c, el);
+      const m = mapper(data.fin); n = 9; drawMap(m, c); fillCell(m, data.fin, c, 1); pin(m, c, el);
     } else {
       const u = ph < HOLD ? 0 : ease((ph - HOLD) / ZOOM);
       const m = mapper(viewAt(P(lvl), P(lvl + 1), u));
+      drawMap(m, c);
       drawGrid(data.steps[lvl], m, 1 - u, Math.min(1, ph / 250), c);
       if (lvl < 8) drawGrid(data.steps[lvl + 1], m, u, 0, c); else if (u > 0) fillCell(m, data.fin, c, u);
       pin(m, c, el); n = lvl + (ph > 250 ? 1 : 0);
@@ -349,6 +383,15 @@ onScroll();
     .observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
   size(); setShown(0); coordsEl.textContent = place[1].toFixed(4) + ", " + place[2].toFixed(4);
+  let mapRequested = false;
+  function loadMap() {
+    if (mapRequested) return; mapRequested = true;
+    fetch("data/mexico.json").then((r) => r.json()).then((d) => {
+      MAP = { paises: prep(d.paises), estados: prep(d.estados), municipios: prep(d.municipios) };
+      if (!raf) raf = requestAnimationFrame(frame);
+    }).catch(() => {});
+  }
+  new IntersectionObserver((es) => { if (es[0].isIntersecting) loadMap(); }, { rootMargin: "600px" }).observe(cv);
   new IntersectionObserver((es) => {
     const was = visible; visible = es[0].isIntersecting;
     if (visible && !was) { t0 = performance.now(); shown = -1; if (!raf) raf = requestAnimationFrame(frame); }
